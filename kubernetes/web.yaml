@@ -1,0 +1,67 @@
+# flask-configmap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-config
+  labels:
+    app: web
+data:
+  POSTGRES_HOST: postgres-service.postgres.svc.cluster.local
+  POSTGRES_DB: notesdb
+  POSTGRES_USER: postgres
+  POSTGRES_PORT: "5432"
+
+---
+
+# flask-secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: flask-secret
+type: Opaque
+data:
+  POSTGRES_PASSWORD: cG9zdGdyZXM=     # base64 for 'postgres'
+
+---
+
+# web-deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web
+        image: nevisha/final_web_app:latest
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - configMapRef:
+            name: flask-config
+        - secretRef:
+            name: flask-secret
+
+---
+
+# web-service
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  selector:
+    app: web
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
