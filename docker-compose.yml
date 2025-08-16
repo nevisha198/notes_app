@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_DB: notesdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+
+  web:
+    build: .
+    expose:
+      - "5000"
+    depends_on:
+      - db
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: notesdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  proxy:
+    image: nevisha/final_nginx_proxy:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - web
